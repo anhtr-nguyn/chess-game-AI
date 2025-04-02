@@ -61,8 +61,8 @@ blackPawnScore =   [[0, 0, 0, 0, 0, 0, 0, 0],
 piecePosScores =  {'N': knightScore, 'B': bishopScore, 'Q': queenScore, 'R': rookScore, "wp": whitePawnScore, "bp": blackPawnScore}
 
 
-CHECKMATE = 100000
-STALEMATE = 0
+check_mate = 100000
+stale_mate = 0
 MAX_DEPTH = 4
 
 ''' Find random move for AI '''
@@ -75,11 +75,11 @@ def findBestMoveMinimax(gs, validMoves):
     global nextMove
     global nodes
     nextMove = None
-    alpha = -CHECKMATE
-    beta = CHECKMATE
+    alpha = -check_mate
+    beta = check_mate
     nodes = 0
     start_time = time.time()
-    findMoveMinimax(gs, validMoves, MAX_DEPTH, alpha, beta, gs.whiteToMove)
+    findMoveMinimax(gs, validMoves, MAX_DEPTH, alpha, beta, gs.white_to_move)
     end_time = time.time()
     elapsed_time = end_time - start_time
     print ("elapsed_time:{0}".format(elapsed_time) + "[sec]")
@@ -87,21 +87,21 @@ def findBestMoveMinimax(gs, validMoves):
     return nextMove
 
 
-def findMoveMinimax(gs, validMoves, depth, alpha, beta, whiteToMove):
+def findMoveMinimax(gs, validMoves, depth, alpha, beta, white_to_move):
     global nextMove
     global nodes
     nodes += 1
-    if depth == 0 or gs.checkMate or gs.staleMate:
+    if depth == 0 or gs.check_mate or gs.stale_mate:
         return scoreBoard(gs)
     random.shuffle(validMoves)
-    if whiteToMove:
-        maxScore = -CHECKMATE
+    if white_to_move:
+        maxScore = -check_mate
         random.shuffle(validMoves)
         for move in validMoves:
-            gs.makeMove(move)
-            nextMoves = gs.getValidMoves()
+            gs.make_move(move)
+            nextMoves = gs.get_valid_moves()
             score = findMoveMinimax(gs, nextMoves, depth - 1, alpha, beta, False)
-            gs.undoMove()
+            gs.undo_move()
             if score > maxScore:
                 maxScore = score
                 if depth == MAX_DEPTH:
@@ -111,13 +111,13 @@ def findMoveMinimax(gs, validMoves, depth, alpha, beta, whiteToMove):
                 break
         return maxScore
     else:
-        minScore = CHECKMATE
+        minScore = check_mate
         random.shuffle(validMoves)
         for move in validMoves:
-            gs.makeMove(move)
-            nextMoves = gs.getValidMoves()
+            gs.make_move(move)
+            nextMoves = gs.get_valid_moves()
             score = findMoveMinimax(gs, nextMoves, depth - 1, alpha, beta, True)
-            gs.undoMove()
+            gs.undo_move()
             if score < minScore:
                 minScore = score
                 if depth == MAX_DEPTH:
@@ -128,14 +128,14 @@ def findMoveMinimax(gs, validMoves, depth, alpha, beta, whiteToMove):
         return minScore
 
 def scoreBoard(gs):
-    if gs.checkMate:
-        if gs.whiteToMove:
-            return -CHECKMATE  #black win
+    if gs.check_mate:
+        if gs.white_to_move:
+            return -check_mate  #black win
         else:
-            return CHECKMATE   #white win
-    elif gs.staleMate:
-        return STALEMATE
-    # if not checkmate or stalemate:
+            return check_mate   #white win
+    elif gs.stale_mate:
+        return stale_mate
+    # if not check_mate or stale_mate:
     score = 0
     for row in range(8):
         for col in range(8):

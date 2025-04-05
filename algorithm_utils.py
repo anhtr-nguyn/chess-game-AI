@@ -1,156 +1,157 @@
 import random
 import time
+from chess_engine import GameState, Move
 
-
+# Piece evaluation scores
 pieceScore = {"K": 0, "Q": 90, "R": 50, "B": 35, "N": 30, "p": 10}
 
-knightScore =  [[1, 1, 1, 1, 1, 1, 1, 1],
-                [1, 2, 2, 2, 2, 2, 2, 1],
-                [1, 2, 3, 3, 3, 3, 2, 1],
-                [1, 2, 3, 4, 4, 3, 2, 1],
-                [1, 2, 3, 4, 4, 3, 2, 1],
-                [1, 2, 3, 3, 3, 3, 2, 1],
-                [1, 2, 2, 2, 2, 2, 2, 1],
-                [1, 1, 1, 1, 1, 1, 1, 1]]
+# Position score matrices for non-king pieces
+knightScore = [[1, 1, 1, 1, 1, 1, 1, 1],
+               [1, 2, 2, 2, 2, 2, 2, 1],
+               [1, 2, 3, 3, 3, 3, 2, 1],
+               [1, 2, 3, 4, 4, 3, 2, 1],
+               [1, 2, 3, 4, 4, 3, 2, 1],
+               [1, 2, 3, 3, 3, 3, 2, 1],
+               [1, 2, 2, 2, 2, 2, 2, 1],
+               [1, 1, 1, 1, 1, 1, 1, 1]]
 
-bishopScore =  [[4, 3, 2, 1, 1, 2, 3, 4],
-                [3, 4, 3, 2, 2, 3, 4, 3],
-                [2, 3, 4, 3, 3, 4, 3, 2],
-                [1, 2, 3, 4, 4, 3, 2, 1],
-                [1, 2, 3, 4, 4, 3, 2, 1],
-                [2, 3, 4, 3, 3, 4, 3, 2],
-                [3, 4, 3, 2, 2, 3, 4, 3],
-                [4, 3, 2, 1, 1, 2, 3, 4]]
+bishopScore = [[4, 3, 2, 1, 1, 2, 3, 4],
+               [3, 4, 3, 2, 2, 3, 4, 3],
+               [2, 3, 4, 3, 3, 4, 3, 2],
+               [1, 2, 3, 4, 4, 3, 2, 1],
+               [1, 2, 3, 4, 4, 3, 2, 1],
+               [2, 3, 4, 3, 3, 4, 3, 2],
+               [3, 4, 3, 2, 2, 3, 4, 3],
+               [4, 3, 2, 1, 1, 2, 3, 4]]
 
-queenScore =   [[1, 1, 1, 3, 1, 1, 1, 1],
-                [1, 2, 3, 3, 3, 1, 1, 1],
-                [1, 4, 3, 3, 3, 4, 2, 1],
-                [1, 2, 3, 3, 3, 2, 2, 1],
-                [1, 2, 3, 3, 3, 2, 2, 1],
-                [1, 4, 3, 3, 3, 4, 2, 1],
-                [1, 2, 3, 3, 3, 1, 1, 1],
-                [1, 1, 1, 3, 1, 1, 1, 1]]
+queenScore = [[1, 1, 1, 3, 1, 1, 1, 1],
+              [1, 2, 3, 3, 3, 1, 1, 1],
+              [1, 4, 3, 3, 3, 4, 2, 1],
+              [1, 2, 3, 3, 3, 2, 2, 1],
+              [1, 2, 3, 3, 3, 2, 2, 1],
+              [1, 4, 3, 3, 3, 4, 2, 1],
+              [1, 2, 3, 3, 3, 1, 1, 1],
+              [1, 1, 1, 3, 1, 1, 1, 1]]
 
-rookScore =    [[4, 3, 4, 4, 4, 4, 3, 4],
-                [4, 4, 4, 4, 4, 4, 4, 4],
-                [1, 1, 2, 3, 3, 2, 1, 1],
-                [1, 2, 3, 4, 4, 3, 2, 1],
-                [1, 2, 3, 4, 4, 3, 2, 1],
-                [1, 1, 2, 3, 3, 2, 1, 1],
-                [4, 4, 4, 4, 4, 4, 4, 4],
-                [4, 3, 4, 4, 4, 4, 3, 4]]
+rookScore = [[4, 3, 4, 4, 4, 4, 3, 4],
+             [4, 4, 4, 4, 4, 4, 4, 4],
+             [1, 1, 2, 3, 3, 2, 1, 1],
+             [1, 2, 3, 4, 4, 3, 2, 1],
+             [1, 2, 3, 4, 4, 3, 2, 1],
+             [1, 1, 2, 3, 3, 2, 1, 1],
+             [4, 4, 4, 4, 4, 4, 4, 4],
+             [4, 3, 4, 4, 4, 4, 3, 4]]
 
-whitePawnScore =   [[8, 8, 8, 8, 8, 8, 8, 8],
-                    [8, 8, 8, 8, 8, 8, 8, 8],
-                    [5, 6, 6, 7, 7, 6, 6, 5],
-                    [2, 3, 3, 5, 5, 3, 3, 2],
-                    [1, 2, 3, 4, 4, 3, 2, 1],
-                    [1, 2, 3, 3, 3, 3, 2, 1],
-                    [1, 1, 1, 0, 0, 1, 1, 1],
-                    [0, 0, 0, 0, 0, 0, 0, 0]]
+whitePawnScore = [[8, 8, 8, 8, 8, 8, 8, 8],
+                  [8, 8, 8, 8, 8, 8, 8, 8],
+                  [5, 6, 6, 7, 7, 6, 6, 5],
+                  [2, 3, 3, 5, 5, 3, 3, 2],
+                  [1, 2, 3, 4, 4, 3, 2, 1],
+                  [1, 2, 3, 3, 3, 3, 2, 1],
+                  [1, 1, 1, 0, 0, 1, 1, 1],
+                  [0, 0, 0, 0, 0, 0, 0, 0]]
 
-blackPawnScore =   [[0, 0, 0, 0, 0, 0, 0, 0],
-                    [1, 1, 1, 0, 0, 1, 1, 1],
-                    [1, 2, 3, 3, 3, 3, 2, 1],
-                    [1, 2, 3, 4, 4, 3, 2, 1],
-                    [2, 3, 3, 5, 5, 3, 3, 2],
-                    [5, 6, 6, 7, 7, 6, 6, 5],
-                    [8, 8, 8, 8, 8, 8, 8, 8],
-                    [8, 8, 8, 8, 8, 8, 8, 8]]
+blackPawnScore = [[0, 0, 0, 0, 0, 0, 0, 0],
+                  [1, 1, 1, 0, 0, 1, 1, 1],
+                  [1, 2, 3, 3, 3, 3, 2, 1],
+                  [1, 2, 3, 4, 4, 3, 2, 1],
+                  [2, 3, 3, 5, 5, 3, 3, 2],
+                  [5, 6, 6, 7, 7, 6, 6, 5],
+                  [8, 8, 8, 8, 8, 8, 8, 8],
+                  [8, 8, 8, 8, 8, 8, 8, 8]]
 
-piecePosScores =  {'N': knightScore, 'B': bishopScore, 'Q': queenScore, 'R': rookScore, "wp": whitePawnScore, "bp": blackPawnScore}
-
+piecePosScores = {
+    'N': knightScore,
+    'B': bishopScore,
+    'Q': queenScore,
+    'R': rookScore,
+    "wp": whitePawnScore,
+    "bp": blackPawnScore
+}
 
 check_mate = 100000
 stale_mate = 0
 MAX_DEPTH = 4
 
-''' Find random move for AI '''
-def findRandomMove(validMoves):
-    if len(validMoves) > 0:
-        return validMoves[random.randint(0, len(validMoves)-1)]
+next_move = None
+nodes = 0
 
+def find_random_move(valid_moves: list) -> Move:
+    """Return a random move from the list of valid moves."""
+    return random.choice(valid_moves) if valid_moves else None
 
-def findBestMoveMinimax(gs, validMoves):
-    global nextMove
-    global nodes
-    nextMove = None
+def find_best_move_minimax(gs: GameState, valid_moves: list) -> Move:
+    """
+    Use the minimax algorithm with alpha-beta pruning to find the best move.
+    """
+    global next_move, nodes
+    next_move = None
     alpha = -check_mate
     beta = check_mate
     nodes = 0
     start_time = time.time()
-    findMoveMinimax(gs, validMoves, MAX_DEPTH, alpha, beta, gs.white_to_move)
+    find_move_minimax(gs, valid_moves, MAX_DEPTH, alpha, beta, gs.white_to_move)
     end_time = time.time()
     elapsed_time = end_time - start_time
-    print ("elapsed_time:{0}".format(elapsed_time) + "[sec]")
-    print(nodes)
-    return nextMove
+    print(f"Elapsed time: {elapsed_time:.2f} sec, nodes: {nodes}")
+    return next_move
 
-
-def findMoveMinimax(gs, validMoves, depth, alpha, beta, white_to_move):
-    global nextMove
-    global nodes
+def find_move_minimax(gs: GameState, valid_moves: list, depth: int, alpha: int, beta: int, white_to_move: bool) -> int:
+    global next_move, nodes
     nodes += 1
     if depth == 0 or gs.check_mate or gs.stale_mate:
-        return scoreBoard(gs)
-    random.shuffle(validMoves)
+        return score_board(gs)
+    random.shuffle(valid_moves)
     if white_to_move:
-        maxScore = -check_mate
-        random.shuffle(validMoves)
-        for move in validMoves:
+        max_score = -check_mate
+        for move in valid_moves:
             gs.make_move(move)
-            nextMoves = gs.get_valid_moves()
-            score = findMoveMinimax(gs, nextMoves, depth - 1, alpha, beta, False)
+            score = find_move_minimax(gs, gs.get_valid_moves(), depth - 1, alpha, beta, False)
             gs.undo_move()
-            if score > maxScore:
-                maxScore = score
+            if score > max_score:
+                max_score = score
                 if depth == MAX_DEPTH:
-                    nextMove = move
+                    next_move = move
             alpha = max(alpha, score)
             if beta <= alpha:
                 break
-        return maxScore
+        return max_score
     else:
-        minScore = check_mate
-        random.shuffle(validMoves)
-        for move in validMoves:
+        min_score = check_mate
+        for move in valid_moves:
             gs.make_move(move)
-            nextMoves = gs.get_valid_moves()
-            score = findMoveMinimax(gs, nextMoves, depth - 1, alpha, beta, True)
+            score = find_move_minimax(gs, gs.get_valid_moves(), depth - 1, alpha, beta, True)
             gs.undo_move()
-            if score < minScore:
-                minScore = score
+            if score < min_score:
+                min_score = score
                 if depth == MAX_DEPTH:
-                    nextMove = move
+                    next_move = move
             beta = min(beta, score)
             if beta <= alpha:
                 break
-        return minScore
+        return min_score
 
-def scoreBoard(gs):
+def score_board(gs: GameState) -> int:
+    """
+    Evaluate the board. Positive score favors white, negative favors black.
+    """
     if gs.check_mate:
-        if gs.white_to_move:
-            return -check_mate  #black win
-        else:
-            return check_mate   #white win
+        return -check_mate if gs.white_to_move else check_mate
     elif gs.stale_mate:
         return stale_mate
-    # if not check_mate or stale_mate:
     score = 0
-    for row in range(8):
-        for col in range(8):
-            square = gs.board[row][col]
-            if square != "--":
-                piecePosScore = 0
-                if square[1] != "K":
-                    if square[1] == "p":
-                        piecePosScore = piecePosScores[square][row][col]
+    for r in range(8):
+        for c in range(8):
+            piece = gs.board[r][c]
+            if piece != "--":
+                pos_score = 0
+                if piece[1] != "K":
+                    if piece[1] == "p":
+                        pos_score = piecePosScores[piece][r][c]
                     else:
-                        piecePosScore = piecePosScores[square[1]][row][col]
-                if square[0] == 'w':
-                    score += pieceScore[square[1]] + piecePosScore
-                elif square[0] == 'b':
-                    score -= pieceScore[square[1]] + piecePosScore
+                        pos_score = piecePosScores[piece[1]][r][c]
+                if piece[0] == 'w':
+                    score += pieceScore[piece[1]] + pos_score
+                elif piece[0] == 'b':
+                    score -= pieceScore[piece[1]] + pos_score
     return score
-
-

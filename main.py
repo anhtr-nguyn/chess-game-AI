@@ -33,14 +33,14 @@ def main():
     animate = False
     game_over = False
     player_one = True   
-    phaer_two = False
+    player_two = False
     load_images()
     sq_selected = ()
     player_clicks = []
 
     running = True
     while running:
-        humanTurn = (gs.white_to_move and player_one) or (not gs.white_to_move and phaer_two)
+        humanTurn = (gs.white_to_move and player_one) or (not gs.white_to_move and player_two)
         for e in p.event.get():
             if e.type == p.QUIT:
                 running = False
@@ -74,7 +74,7 @@ def main():
                     animate = False
                     game_over = False
                     player_one = True
-                    phaer_two = True
+                    player_two = True
                 elif e.key == p.K_r:
                     gs = chess_engine.GameState()
                     valid_moves = gs.get_valid_moves()
@@ -82,15 +82,15 @@ def main():
                     animate = False
                     game_over = False
                     player_one = True
-                    phaer_two = True
+                    player_two = True
                     sq_selected = ()
                     player_clicks = []
                 elif e.key == p.K_q:
                     player_one = False
-                    phaer_two = True
+                    player_two = True
                 elif e.key == p.K_e:
                     player_one = True
-                    phaer_two = False
+                    player_two = False
 
         if move_made:
             if animate:
@@ -101,9 +101,9 @@ def main():
 
         ''' AI move finder '''
         if not game_over and not humanTurn:
-            AIMove = algorithm_utils.findBestMoveMinimax(gs, valid_moves)
+            AIMove = algorithm_utils.find_best_move_minimax(gs, valid_moves)
             if AIMove is None:   #when begin the game
-                AIMove = algorithm_utils.findRandomMove(valid_moves)
+                AIMove = algorithm_utils.find_random_move(valid_moves)
             gs.make_move(AIMove)
             move_made = True
             animate = True
@@ -125,7 +125,7 @@ def main():
         clock.tick(MAX_FPS)
         p.display.flip()
 
-def highlight_move(screen, gs: GameState, validMoves, sqSelected):
+def highlight_move(screen, gs: GameState, validMoves: list[Move], sqSelected):
     sq = p.Surface((SQ_SIZE, SQ_SIZE))
     sq.set_alpha(100)
     if sqSelected != ():
@@ -143,10 +143,10 @@ def highlight_move(screen, gs: GameState, validMoves, sqSelected):
     if gs.in_check:
         if gs.white_to_move:
             sq.fill(p.Color("red"))
-            screen.blit(sq, (gs.white_king_locate[1] * SQ_SIZE, gs.white_king_locate[0] * SQ_SIZE))
+            screen.blit(sq, (gs.white_king_loc[1] * SQ_SIZE, gs.white_king_loc[0] * SQ_SIZE))
         else:
             sq.fill(p.Color("red"))
-            screen.blit(sq, (gs.black_king_locate[1] * SQ_SIZE, gs.black_king_locate[0] * SQ_SIZE))
+            screen.blit(sq, (gs.black_king_loc[1] * SQ_SIZE, gs.black_king_loc[0] * SQ_SIZE))
     
     if len(gs.moves_log) != 0:
         sq.fill(p.Color("yellow"))
@@ -175,8 +175,8 @@ def animateMove(move: Move, screen, board, clock):
                 enPassantRow = (move.end_row + 1) if move.piece_captured[0] == 'b' else (move.end_row - 1)
                 endSquare = p.Rect(move.end_col*SQ_SIZE, enPassantRow*SQ_SIZE, SQ_SIZE, SQ_SIZE)
             screen.blit(IMAGES[move.piece_captured], endSquare)
-        if move.piece_mmove != "--":
-            screen.blit(IMAGES[move.piece_mmove], p.Rect(c*SQ_SIZE, r*SQ_SIZE, SQ_SIZE, SQ_SIZE))
+        if move.piece_move != "--":
+            screen.blit(IMAGES[move.piece_move], p.Rect(c*SQ_SIZE, r*SQ_SIZE, SQ_SIZE, SQ_SIZE))
         p.display.flip()
         clock.tick(144)
 
@@ -237,3 +237,14 @@ def draw_moveslog(screen, gs: GameState):
 
 if __name__ == "__main__":
     main()
+    
+    
+################## 
+# 1) Tao them tkiner -> text, button -> chon agent
+# 2) Co 1 che do: ben trang la agent cua minh, ben den la agent random
+# 3) Che do nguoi vs agent: 
+###################
+# BTL 2)
+# a. Tao tinker co text va button
+# b. 3 che do: nguoi vs nguoi, nguoi vs agent, agent minimax vs agent random
+# c. Evaluation agent: simulate 1000 ban co -> danh gia khar nang thang thua cua moi agent
